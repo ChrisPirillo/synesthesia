@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--#region Basic Metadata & SEO -->
+    <meta charset="UTF-8">
+    <title>Synesthesia: Interactive Audio-Visual Experience</title>
+    <meta name="description" content="An interactive, browser-based audio-visual experience. Create generative art and music by clicking, typing, or using your microphone. Explore different soundscapes and visual effects.">
+    <meta name="keywords" content="interactive art, audio visualizer, synesthesia, web audio api, html5 canvas, generative art, creative coding, music visualization">
+    <meta name="author" content="Chris Pirillo">
+    <link rel="canonical" href="https://pirillo.com/arcade/synesthesia.html">
+    <!--#endregion -->
+
+    <!--#region Viewport & Performance -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- Preconnect to critical third-party origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <!-- Preload the font stylesheet as it's a critical, render-blocking resource -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"></noscript>
+    <!--#endregion -->
+
+    <!--#region Social Media & Open Graph Metadata -->
+    <meta property="og:title" content="Synesthesia: Interactive Audio-Visual Experience">
+    <meta property="og:description" content="Create generative art and music right in your browser. An interactive audio-visual experience by Chris Pirillo.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pirillo.com/arcade/synesthesia.html">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/synesthesia.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Pirillo's Arcade">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@ChrisPirillo">
+    <meta name="twitter:creator" content="@ChrisPirillo">
+    <meta name="twitter:title" content="Synesthesia: Interactive Audio-Visual Experience">
+    <meta name="twitter:description" content="Create generative art and music right in your browser. An interactive audio-visual experience by Chris Pirillo.">
+    <meta name="twitter:image" content="https://pirillo.com/arcade/images/synesthesia.png">
+    <!--#endregion -->
+
+    <!--#region Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+    <!--#endregion -->
+
+    <!--#region Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Synesthesia: Interactive Audio-Visual Experience",
+      "description": "An interactive, browser-based audio-visual experience. Create generative art and music by clicking, typing, or using your microphone.",
+      "url": "https://pirillo.com/arcade/synesthesia.html",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://pirillo.com/"
+      },
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Pirillo's Arcade",
+        "url": "https://pirillo.com/arcade/"
+      },
+      "image": "https://pirillo.com/arcade/images/synesthesia.png",
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://pirillo.com/arcade/images/synesthesia.png",
+        "width": "1200",
+        "height": "630"
+      }
+    }
+    </script>
+    <!--#endregion -->
+
+    <style>
+        /* Critical CSS is inlined for performance. No changes made to styles. */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Visually hidden class for the H1 tag for SEO purposes without affecting layout */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls-container {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .controls-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none; 
+        }
+        .controls-area::-webkit-scrollbar {
+            display: none; 
+        }
+        
+        .control-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.9);
+            width: 140px; /* Fixed width to prevent resizing */
+            flex-shrink: 0; 
+            height: 50px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 15px;
+        }
+
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .control-button:active {
+            transform: scale(0.98);
+        }
+        
+        .control-button.active {
+             background-color: #2ed573;
+             color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- The main content area of the page -->
+    <main>
+        <!-- A visually hidden H1 tag is added for SEO to provide a primary heading. -->
+        <h1 class="visually-hidden">Synesthesia: An Interactive Audio-Visual Experience</h1>
+
+        <!-- The canvas is the primary interactive element. -->
+        <canvas id="canvas" width="1920" height="1080"></canvas>
+        
+        <!-- The controls are wrapped in a footer for semantic structure. -->
+        <footer class="controls-container">
+            <nav class="controls-area" aria-label="Visualizer Controls">
+                <button id="scaleBtn" class="control-button">Chromatic</button>
+                <button id="effectBtn" class="control-button">Nebula</button>
+                <button id="waveformBtn" class="control-button">Sine</button>
+                <button id="micBtn" class="control-button">Mic Off</button>
+                <button id="autoplayBtn" class="control-button">Autoplay Off</button>
+            </nav>
+        </footer>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scaleBtn = document.getElementById('scaleBtn');
+        const effectBtn = document.getElementById('effectBtn');
+        const waveformBtn = document.getElementById('waveformBtn');
+        const micBtn = document.getElementById('micBtn');
+        const autoplayBtn = document.getElementById('autoplayBtn');
+
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        const effects = ['Nebula', 'Fractal', 'Flare', 'Wave', 'Tunnel', 'Gravity', 'Grid', 'Spiro', 'Strings', 'Bubbles', 'Rain', 'Orbit'];
+        let currentEffectIndex = 0;
+        const MAX_VISUALS = 300; 
+
+        const waveforms = ['sine', 'square', 'sawtooth', 'triangle'];
+        let currentWaveformIndex = 0;
+        
+        const letterColors = {
+            'a': '#ff4757', 'b': '#1e90ff', 'c': '#feca57', 'd': '#5352ed', 'e': '#2ed573', 
+            'f': '#ff6348', 'g': '#ff9ff3', 'h': '#1abc9c', 'i': '#9b59b6', 'j': '#f1c40f', 
+            'k': '#e67e22', 'l': '#e74c3c', 'm': '#3498db', 'n': '#2ecc71', 'o': '#f39c12', 
+            'p': '#d35400', 'q': '#c0392b', 'r': '#2980b9', 's': '#27ae60', 't': '#16a085', 
+            'u': '#8e44ad', 'v': '#ff7f50', 'w': '#34495e', 'x': '#7f8c8d', 'y': '#fffa65', 
+            'z': '#32ff7e', ' ': '#ffffff',
+        };
+
+        const scales = {
+            chromatic: { name: "Chromatic", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':329.63,'f':349.23,'g':392,'h':415.3,'i':466.16,'j':523.25,'k':554.37,'l':587.33,'m':622.25,'n':659.25,'o':698.46,'p':739.99,'q':783.99,'r':830.61,'s':880,'t':932.33,'u':987.77,'v':1046.5,'w':1108.73,'x':1174.66,'y':1244.51,'z':1318.51} },
+            ionian: { name: "Ionian (Major)", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':329.63,'f':349.23,'g':392,'h':440,'i':493.88,'j':523.25,'k':587.33,'l':659.25,'m':698.46,'n':783.99,'o':880,'p':987.77,'q':261.63,'r':293.66,'s':329.63,'t':349.23,'u':392,'v':440,'w':493.88,'x':523.25,'y':587.33,'z':659.25} },
+            dorian: { name: "Dorian", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':311.13,'f':349.23,'g':392,'h':440,'i':493.88,'j':523.25,'k':587.33,'l':622.25,'m':698.46,'n':783.99,'o':880,'p':987.77,'q':261.63,'r':293.66,'s':311.13,'t':349.23,'u':392,'v':440,'w':493.88,'x':523.25,'y':587.33,'z':622.25} },
+            phrygian: { name: "Phrygian", notes: {'a':440,'b':466.16,'c':261.63,'d':277.18,'e':311.13,'f':349.23,'g':392,'h':415.3,'i':466.16,'j':523.25,'k':554.37,'l':622.25,'m':698.46,'n':783.99,'o':830.61,'p':932.33,'q':261.63,'r':277.18,'s':311.13,'t':349.23,'u':392,'v':415.3,'w':466.16,'x':523.25,'y':554.37,'z':622.25} },
+            lydian: { name: "Lydian", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':329.63,'f':369.99,'g':392,'h':440,'i':493.88,'j':523.25,'k':587.33,'l':659.25,'m':739.99,'n':783.99,'o':880,'p':987.77,'q':261.63,'r':293.66,'s':329.63,'t':369.99,'u':392,'v':440,'w':493.88,'x':523.25,'y':587.33,'z':659.25} },
+            mixolydian: { name: "Mixolydian", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':329.63,'f':349.23,'g':392,'h':440,'i':493.88,'j':523.25,'k':587.33,'l':659.25,'m':698.46,'n':739.99,'o':880,'p':987.77,'q':261.63,'r':293.66,'s':329.63,'t':349.23,'u':392,'v':440,'w':493.88,'x':523.25,'y':587.33,'z':659.25} },
+            minor: { name: "Minor", notes: {'a':440,'b':466.16,'c':261.63,'d':293.66,'e':311.13,'f':349.23,'g':392,'h':440,'i':466.16,'j':523.25,'k':587.33,'l':622.25,'m':698.46,'n':783.99,'o':880,'p':932.33,'q':261.63,'r':293.66,'s':311.13,'t':349.23,'u':392,'v':440,'w':466.16,'x':523.25,'y':587.33,'z':622.25} },
+            locrian: { name: "Locrian", notes: {'a':440,'b':466.16,'c':261.63,'d':277.18,'e':311.13,'f':349.23,'g':369.99,'h':415.3,'i':466.16,'j':523.25,'k':554.37,'l':622.25,'m':659.25,'n':739.99,'o':830.61,'p':932.33,'q':261.63,'r':277.18,'s':311.13,'t':349.23,'u':369.99,'v':415.3,'w':466.16,'x':523.25,'y':554.37,'z':622.25} },
+            arabic: { name: "Arabic", notes: {'a':440,'b':466.16,'c':261.63,'d':277.18,'e':329.63,'f':349.23,'g':392,'h':440,'i':466.16,'j':523.25,'k':587.33,'l':659.25,'m':698.46,'n':783.99,'o':880,'p':932.33,'q':261.63,'r':277.18,'s':329.63,'t':349.23,'u':392,'v':440,'w':466.16,'x':523.25,'y':587.33,'z':659.25} },
+            oriental: { name: "Oriental", notes: {'a':440,'b':466.16,'c':261.63,'d':277.18,'e':329.63,'f':349.23,'g':369.99,'h':440,'i':466.16,'j':523.25,'k':587.33,'l':622.25,'m':698.46,'n':739.99,'o':880,'p':932.33,'q':261.63,'r':277.18,'s':329.63,'t':349.23,'u':369.99,'v':440,'w':466.16,'x':523.25,'y':587.33,'z':622.25} },
+            pentatonic: { name: "Pentatonic", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':329.63,'f':392,'g':440,'h':493.88,'i':523.25,'j':587.33,'k':659.25,'l':783.99,'m':880,'n':987.77,'o':1046.5,'p':261.63,'q':293.66,'r':329.63,'s':392,'t':440,'u':493.88,'v':523.25,'w':587.33,'x':659.25,'y':783.99,'z':880} },
+            blues: { name: "Blues", notes: {'a':440,'b':523.25,'c':261.63,'d':311.13,'e':329.63,'f':349.23,'g':392,'h':466.16,'i':523.25,'j':622.25,'k':659.25,'l':698.46,'m':783.99,'n':880,'o':1046.5,'p':261.63,'q':311.13,'r':329.63,'s':349.23,'t':392,'u':466.16,'v':523.25,'w':622.25,'x':659.25,'y':698.46,'z':783.99} },
+            harmonic_minor: { name: "Harmonic Minor", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':311.13,'f':349.23,'g':392,'h':440,'i':493.88,'j':523.25,'k':554.37,'l':622.25,'m':698.46,'n':783.99,'o':880,'p':987.77,'q':261.63,'r':293.66,'s':311.13,'t':349.23,'u':392,'v':440,'w':493.88,'x':523.25,'y':554.37,'z':622.25} },
+            whole_tone: { name: "Whole Tone", notes: {'a':440,'b':493.88,'c':261.63,'d':293.66,'e':329.63,'f':369.99,'g':415.3,'h':466.16,'i':523.25,'j':587.33,'k':659.25,'l':739.99,'m':830.61,'n':932.33,'o':1046.5,'p':1174.66,'q':261.63,'r':293.66,'s':329.63,'t':369.99,'u':415.3,'v':466.16,'w':523.25,'x':587.33,'y':659.25,'z':739.99} },
+            hirajoshi: { name: "Hirajoshi", notes: {'a':440,'b':466.16,'c':261.63,'d':277.18,'e':311.13,'f':349.23,'g':392,'h':440,'i':466.16,'j':523.25,'k':554.37,'l':659.25,'m':698.46,'n':783.99,'o':830.61,'p':987.77,'q':261.63,'r':277.18,'s':311.13,'t':349.23,'u':392,'v':440,'w':466.16,'x':523.25,'y':554.37,'z':659.25} },
+        };
+        let scaleKeys = Object.keys(scales);
+        let currentScaleIndex = 0;
+
+        let visualObjects = [];
+        let audioContext, analyser, micSource;
+        let isAudioInitialized = false;
+        
+        let isAutoplaying = false;
+        let isMicActive = false;
+        let lastMicTriggerTime = 0;
+        const MIC_COOLDOWN = 150; 
+        let micBaseline = 0;
+        let isCalibrating = false;
+        let lastAutoplayTime = 0;
+        
+        let isPointerDown = false;
+        let pointerX = 0;
+        let pointerY = 0;
+        
+        // --- Visual Object Classes ---
+        class VisualObject { constructor() { this.life = 1; } update() {} draw() {} }
+        class NebulaParticle extends VisualObject { constructor(x, y, color) { super(); this.x = x; this.y = y; this.color = color; this.size = Math.random() * 20 + 5; this.life = Math.random() * 50 + 40; this.initialLife = this.life; this.angle = Math.random() * Math.PI * 2; this.speed = Math.random() * 1.5 + 0.2; this.vx = Math.cos(this.angle) * this.speed; this.vy = Math.sin(this.angle) * this.speed; } update() { this.x += this.vx; this.y += this.vy; this.life--; } draw() { ctx.save(); ctx.globalAlpha = (this.life / this.initialLife) * 0.7; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } }
+        class FractalBranch extends VisualObject { constructor(x, y, color, angle, generation, rotation) { super(); this.x = x; this.y = y; this.color = color; this.angle = angle; this.generation = generation; this.life = 120; this.len = Math.pow(0.85, generation) * (height / 20); this.rotation = rotation; } update() { this.life--; this.angle += this.rotation; if (this.generation < 6 && this.life > 115 && visualObjects.length < MAX_VISUALS) { const branchAngle = Math.random() * 0.5 + 0.25; visualObjects.push(new FractalBranch(this.x, this.y, this.color, this.angle - branchAngle, this.generation + 1, this.rotation)); visualObjects.push(new FractalBranch(this.x, this.y, this.color, this.angle + branchAngle, this.generation + 1, this.rotation)); } } draw() { const endX = this.x + Math.cos(this.angle) * this.len; const endY = this.y + Math.sin(this.angle) * this.len; ctx.save(); ctx.strokeStyle = this.color; ctx.globalAlpha = Math.max(0, this.life / 120); ctx.lineWidth = Math.pow(0.75, this.generation) * 8; ctx.shadowBlur = 10; ctx.shadowColor = this.color; ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(endX, endY); ctx.stroke(); ctx.restore(); this.x = endX; this.y = endY; } }
+        class Flare extends VisualObject { constructor(x, y, color) { super(); this.x = x; this.y = y; this.color = color; this.life = 60; this.maxRadius = Math.random() * 100 + 50; } update() { this.life--; } draw() { const alpha = this.life / 60; let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.maxRadius * alpha); grad.addColorStop(0, `${this.color}ff`); grad.addColorStop(0.2, `${this.color}aa`); grad.addColorStop(1, `${this.color}00`); ctx.fillStyle = grad; ctx.fillRect(0, 0, width, height); ctx.save(); ctx.translate(this.x, this.y); ctx.strokeStyle = this.color; ctx.globalAlpha = alpha * 0.5; for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI / 4); ctx.lineWidth = Math.random() * 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(this.maxRadius * 1.5 * alpha, 0); ctx.stroke(); } ctx.restore(); } }
+        class Wave extends VisualObject { constructor(color) { super(); this.color = color; this.life = 80; this.dataArray = new Uint8Array(analyser.frequencyBinCount); } update() { analyser.getByteTimeDomainData(this.dataArray); this.life--; } draw() { ctx.save(); ctx.lineWidth = 4; ctx.strokeStyle = this.color; ctx.globalAlpha = this.life / 80; ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.beginPath(); const sliceWidth = width * 1.0 / analyser.frequencyBinCount; let x = 0; for (let i = 0; i < analyser.frequencyBinCount; i++) { const v = this.dataArray[i] / 128.0; const y = v * height / 2; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); x += sliceWidth; } ctx.lineTo(width, height / 2); ctx.stroke(); ctx.restore(); } }
+        class TunnelRing extends VisualObject { constructor(x, y, color) { super(); this.x = x; this.y = y; this.color = color; this.z = 1; this.life = 200; } update() { this.z += 0.02; this.life--; } draw() { const perspective = width / (width + this.z * 500); const screenX = this.x * perspective + width / 2 * (1 - perspective); const screenY = this.y * perspective + height / 2 * (1 - perspective); const radius = 50 * perspective; ctx.save(); ctx.beginPath(); ctx.strokeStyle = this.color; ctx.lineWidth = 4 * perspective; ctx.globalAlpha = Math.max(0, this.life / 200); ctx.arc(screenX, screenY, radius, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); } }
+        class GravityParticle extends VisualObject { constructor(x, y, color, well) { super(); this.x = x; this.y = y; this.color = color; this.well = well; this.life = Math.random() * 150 + 100; this.size = Math.random() * 3 + 1; const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 4 + 2; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; } update() { const dx = this.well.x - this.x; const dy = this.well.y - this.y; const distSq = dx * dx + dy * dy; if (distSq > 0.0001) { const force = this.well.strength / distSq; this.vx += dx * force; this.vy += dy * force; } this.x += this.vx; this.y += this.vy; this.life--; } draw() { ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.life / 150); ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); } }
+        class Grid extends VisualObject { constructor(x, y, color) { super(); this.x = x; this.y = y; this.color = color; this.life = 60; this.radius = 0; } update() { this.radius += width / 30; this.life--; } draw() { const alpha = this.life / 60; const gridSize = 50; for (let i = 0; i < width; i += gridSize) { for (let j = 0; j < height; j += gridSize) { const dist = Math.sqrt(Math.pow(i - this.x, 2) + Math.pow(j - this.y, 2)); if (dist < this.radius && dist > this.radius - 50) { ctx.fillStyle = this.color; ctx.globalAlpha = alpha; ctx.fillRect(i - 1, j - 1, 3, 3); } } } } }
+        class Spiro extends VisualObject { constructor(x, y, color) { super(); this.x = x; this.y = y; this.color = color; this.life = 300; this.R = Math.random() * 60 + 60; this.r = (Math.random() * 40 + 20) * (Math.random() > 0.5 ? 1 : -1); this.d = Math.random() * 50 + 30; this.t = 0; this.lastX = -1; this.lastY = -1; } update() { this.life--; this.t += 0.1; } draw() { const alpha = this.life / 300; const newX = this.x + (this.R - this.r) * Math.cos(this.t) + this.d * Math.cos(((this.R - this.r) / this.r) * this.t); const newY = this.y + (this.R - this.r) * Math.sin(this.t) - this.d * Math.sin(((this.R - this.r) / this.r) * this.t); if (this.lastX > -1) { ctx.save(); ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.globalAlpha = alpha; ctx.beginPath(); ctx.moveTo(this.lastX, this.lastY); ctx.lineTo(newX, newY); ctx.stroke(); ctx.restore(); } this.lastX = newX; this.lastY = newY; } }
+        class String extends VisualObject { constructor(color) { super(); this.color = color; this.life = 100; this.x1 = Math.random() * width; this.y1 = 0; this.x2 = Math.random() * width; this.y2 = height; this.maxWobble = Math.random() * 20 + 10; } update() { this.life--; } draw() { ctx.save(); ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.globalAlpha = Math.max(0, this.life / 100); ctx.beginPath(); ctx.moveTo(this.x1, this.y1); const wobble = Math.sin(this.life * 0.5) * this.maxWobble * (this.life / 100); ctx.lineTo(width / 2 + wobble, height / 2); ctx.lineTo(this.x2, this.y2); ctx.stroke(); ctx.restore(); } }
+        class Bubble extends VisualObject { constructor(x, y, color) { super(); this.x = x; this.y = y; this.color = color; this.life = Math.random() * 150 + 50; this.radius = Math.random() * 20 + 10; this.vy = -Math.random() * 2 - 1; } update() { this.y += this.vy; this.life--; } draw() { ctx.save(); ctx.strokeStyle = this.color; ctx.fillStyle = `${this.color}33`; ctx.lineWidth = 3; ctx.globalAlpha = Math.max(0, this.life / 150); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore(); } }
+        class Rain extends VisualObject { constructor(color) { super(); this.x = Math.random() * width; this.y = 0; this.color = color; this.life = height; this.vy = Math.random() * 5 + 5; } update() { this.y += this.vy; this.life--; if(this.y >= height) { this.life = 0; if (visualObjects.length < MAX_VISUALS) visualObjects.push(new Grid(this.x, this.y, this.color)); } } draw() { ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, 2, 10); } }
+        class Orbit extends VisualObject { constructor(x, y, color) { super(); this.x = x; this.y = y; this.color = color; this.life = Math.random() * 200 + 100; this.radius = Math.random() * 80 + 20; this.speed = (Math.random() - 0.5) * 0.1; this.angle = Math.random() * Math.PI * 2; this.particleSize = Math.random() * 3 + 1; } update() { this.life--; this.angle += this.speed; } draw() { const particleX = this.x + Math.cos(this.angle) * this.radius; const particleY = this.y + Math.sin(this.angle) * this.radius; ctx.save(); ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.life / 200); ctx.beginPath(); ctx.arc(particleX, particleY, this.particleSize, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } }
+
+        function initAudio() { if (isAudioInitialized) return; try { audioContext = new (window.AudioContext || window.webkitAudioContext)(); analyser = audioContext.createAnalyser(); analyser.fftSize = 2048; isAudioInitialized = true; } catch (e) { console.error("Web Audio API is not supported."); } }
+        function playNote(frequency, duration = 0.3) { if (!audioContext || !frequency) return; const oscillator = audioContext.createOscillator(); const gainNode = audioContext.createGain(); oscillator.type = waveforms[currentWaveformIndex]; oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime); gainNode.gain.setValueAtTime(0.2, audioContext.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration); oscillator.connect(gainNode); gainNode.connect(analyser); gainNode.connect(audioContext.destination); oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + duration); }
+        function triggerSoundAndVision(x, y, letter) { const char = letter ? letter.toLowerCase() : 'a'; const currentScaleName = scaleKeys[currentScaleIndex]; if (!scales[currentScaleName].notes[char]) return; const color = letterColors[char] || '#ffffff'; const frequency = scales[currentScaleName].notes[char]; playNote(frequency); createVisuals(x, y, color); }
+        
+        function createVisuals(x, y, color) {
+            if (visualObjects.length > MAX_VISUALS) visualObjects.shift();
+            const effect = effects[currentEffectIndex];
+            switch (effect) {
+                case 'Nebula': for (let i = 0; i < 20; i++) visualObjects.push(new NebulaParticle(x, y, color)); break;
+                case 'Fractal': const rot = (Math.random() - 0.5) * 0.02; for(let i = 0; i < 4; i++) visualObjects.push(new FractalBranch(x, y, color, (Math.PI / 2) * i, 0, rot)); break;
+                case 'Flare': visualObjects.push(new Flare(x, y, color)); break;
+                case 'Wave': if (analyser) visualObjects.push(new Wave(color)); break;
+                case 'Tunnel': visualObjects.push(new TunnelRing(x, y, color)); break;
+                case 'Gravity': const well = { x: x, y: y, strength: 50 }; for (let i = 0; i < 50; i++) visualObjects.push(new GravityParticle(x + (Math.random() - 0.5) * 50, y + (Math.random() - 0.5) * 50, color, well)); break;
+                case 'Grid': visualObjects.push(new Grid(x, y, color)); break;
+                case 'Spiro': visualObjects.push(new Spiro(x, y, color)); break;
+                case 'Strings': visualObjects.push(new String(color)); break;
+                case 'Bubbles': for (let i = 0; i < 5; i++) visualObjects.push(new Bubble(x + (Math.random()-0.5)*50, y, color)); break;
+                case 'Rain': for (let i = 0; i < 10; i++) visualObjects.push(new Rain(color)); break;
+                case 'Orbit': for (let i = 0; i < 20; i++) visualObjects.push(new Orbit(x, y, color)); break;
+            }
+        }
+        
+        function animate() {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            const now = Date.now();
+            
+            if (isAutoplaying && now > lastAutoplayTime + (Math.random() * 500 + 300)) {
+                lastAutoplayTime = now;
+                const x = width / 2 + (Math.random() - 0.5) * width;
+                const y = height / 2 + (Math.random() - 0.5) * height;
+                const key = Object.keys(letterColors)[Math.floor(Math.random() * 26)];
+                triggerSoundAndVision(x, y, key);
+                if (Math.random() < 0.15) {
+                    const key2 = Object.keys(letterColors)[Math.floor(Math.random() * 26)];
+                    const key3 = Object.keys(letterColors)[Math.floor(Math.random() * 26)];
+                    triggerSoundAndVision(x+20, y+20, key2);
+                    triggerSoundAndVision(x-20, y-20, key3);
+                }
+            }
+
+            if(isMicActive && analyser && !isCalibrating && now > lastMicTriggerTime + MIC_COOLDOWN) {
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0; for(const amp of dataArray) sum += amp; const average = sum / dataArray.length;
+                if (average > micBaseline + 10) { 
+                    lastMicTriggerTime = now;
+                    const x = width / 2 + (Math.random() - 0.5) * width;
+                    const y = height / 2 + (Math.random() - 0.5) * height;
+                    const key = Object.keys(letterColors)[Math.floor(Math.random() * 26)];
+                    triggerSoundAndVision(x, y, key);
+                }
+            }
+            visualObjects = visualObjects.filter(obj => { obj.update(); if (obj.life > 0 && obj.life !== undefined) { obj.draw(); return true; } return false; });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        scaleBtn.addEventListener('click', () => { currentScaleIndex = (currentScaleIndex + 1) % scaleKeys.length; scaleBtn.textContent = scales[scaleKeys[currentScaleIndex]].name; });
+        effectBtn.addEventListener('click', () => { currentEffectIndex = (currentEffectIndex + 1) % effects.length; effectBtn.textContent = effects[currentEffectIndex]; visualObjects = []; });
+        waveformBtn.addEventListener('click', () => { currentWaveformIndex = (currentWaveformIndex + 1) % waveforms.length; waveformBtn.textContent = waveforms[currentWaveformIndex].charAt(0).toUpperCase() + waveforms[currentWaveformIndex].slice(1); });
+        
+        async function calibrateMic() {
+            if (!isMicActive) return;
+            isCalibrating = true;
+            micBtn.textContent = "Calibrating...";
+            let readings = [];
+            const calibrationDuration = 1000;
+            const interval = 50;
+            const numReadings = calibrationDuration / interval;
+            for (let i = 0; i < numReadings; i++) {
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0; for(const amp of dataArray) sum += amp;
+                readings.push(sum / dataArray.length);
+                await new Promise(resolve => setTimeout(resolve, interval));
+            }
+            micBaseline = readings.reduce((a,b) => a+b, 0) / readings.length;
+            isCalibrating = false;
+            micBtn.textContent = "Mic On";
+            micBtn.classList.add('active');
+        }
+
+        micBtn.addEventListener('click', async () => {
+            initAudio();
+            isMicActive = !isMicActive;
+            if (isMicActive) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    micSource = audioContext.createMediaStreamSource(stream);
+                    micSource.connect(analyser);
+                    autoplayBtn.classList.remove('active'); isAutoplaying = false; autoplayBtn.textContent = "Autoplay Off";
+                    calibrateMic();
+                } catch(err) { console.error("Mic access denied.", err); isMicActive = false; }
+            } else {
+                if (micSource) micSource.disconnect();
+                micBtn.textContent = "Mic Off";
+                micBtn.classList.remove('active');
+            }
+        });
+        
+        autoplayBtn.addEventListener('click', () => {
+            initAudio();
+            isAutoplaying = !isAutoplaying;
+            if (isAutoplaying) {
+                autoplayBtn.textContent = "Autoplay On";
+                autoplayBtn.classList.add('active');
+                if(isMicActive) { if (micSource) micSource.disconnect(); isMicActive = false; micBtn.textContent = "Mic Off"; micBtn.classList.remove('active'); }
+            } else {
+                autoplayBtn.textContent = "Autoplay Off";
+                autoplayBtn.classList.remove('active');
+            }
+        });
+
+        window.addEventListener('resize', () => { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; });
+        
+        const handleInteraction = (x, y, key) => { 
+            initAudio(); 
+            if (isAutoplaying || isMicActive) return; 
+            const char = key || Object.keys(letterColors)[Math.floor(Math.random() * 26)]; 
+            triggerSoundAndVision(x, y, char); 
+        };
+
+        function handlePointerDown(x, y) {
+            isPointerDown = true;
+            pointerX = x;
+            pointerY = y;
+            handleInteraction(x, y);
+        }
+
+        function handlePointerMove(x, y) {
+            if (isPointerDown) {
+                pointerX = x;
+                pointerY = y;
+            }
+        }
+
+        function handlePointerUp() {
+            isPointerDown = false;
+        }
+
+        canvas.addEventListener('mousedown', (e) => handlePointerDown(e.clientX, e.clientY));
+        canvas.addEventListener('mousemove', (e) => handlePointerMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handlePointerUp);
+        canvas.addEventListener('mouseleave', handlePointerUp);
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handlePointerDown(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        window.addEventListener('touchend', handlePointerUp);
+        window.addEventListener('touchcancel', handlePointerUp);
+
+        window.addEventListener('keydown', (e) => { 
+            if (e.repeat) return;
+            if (e.key.length === 1 && letterColors[e.key.toLowerCase()]) { 
+                const x = width / 2 + (Math.random() - 0.5) * (width * 0.5); 
+                const y = height / 2 + (Math.random() - 0.5) * (height * 0.5); 
+                handleInteraction(x, y, e.key); 
+            } 
+        });
+
+        animate();
+    </script>
+</body>
+</html>
